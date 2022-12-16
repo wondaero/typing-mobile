@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>typy!ng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="./assets/css/normalize.css">
+    <style>
+        header{
+            position: fixed; top: 0; left: 0; right: 0; background: #fff; padding: 8px;
+            box-sizing: border-box; box-shadow: 0 1px 5px rgba(0, 0, 0, .5); z-index: 1;
+        }
+        header .header-top{display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;}
+        header .logo{margin: 0; padding: 0; font-size: 20px;}
+        header button{
+            background: #eee; border: 0; outline: 0; height: auto; color: #fff; padding: 8px 10px;
+            border-radius: 5px; width: 80px; cursor: pointer; font-weight: 900;
+        }
+
+        .sizes span{
+          display: inline-block; padding: 8px 10px; width: 35px; background: #ddd; border-radius: 5px; transition: .5s;
+          text-align: center; font-size: 12px; cursor: pointer; font-weight: 900;
+        }
+
+        .sizes input{display: none;}
+        .sizes input[name="size2"] + span{cursor: not-allowed;}
+        
+        .sizes label:nth-child(1) input:checked + span{background: red; color: #fff;}
+        .sizes label:nth-child(2) input:checked + span{background: yellow; color: #000;}
+        .sizes label:nth-child(3) input:checked + span{background: green; color: #fff;}
+        .sizes label:nth-child(4) input:checked + span{background: blue; color: #fff;}
+        .sizes label:nth-child(5) input:checked + span{background: purple; color: #fff;}
+
+
+        .board-wrapper{position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 100px;}
+        .board-wrapper2{border-radius: 50%; width: 100%; height: 100%; background: gainsboro; display: flex; align-items: center; justify-content: center;}
+        .board{width: 70%; height: 70%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;}
+        .board > div{box-sizing: border-box; padding: 3px;}
+        .board > div > div{
+            box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: red;
+            width: 100%; height: 100%;
+        }
+        footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee;}
+        .keypad{display: flex; align-items: center; justify-content: center; flex-wrap: wrap; width: 150px;}
+        .keypad > div{width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: gray;}
+        .keypad > div{margin-right: 5px; margin-bottom: 5px;}
+        .keypad > div:nth-child(3n){margin-right: 0;}
+        .keypad > div:nth-child(n + 10){margin-bottom: 0;}
+    </style>
+
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <h1 class="logo">typy!ng</h1>
+            <div>
+                <button id="btn_init1" class="btn-init">초기화</button>
+                <button id="btn_start" class="btn-start">시작</button>
+            </div>
+        </div>
+        <div class="heder-bottom">
+            <div id="sizes" class="sizes">
+                <label><input type="radio" name="size" value="4" onChange="getSize()"/><span>4 * 4</span></label>
+                <label><input type="radio" name="size" value="5" onChange="getSize()" checked/><span>5 * 5</span></label>
+                <label><input type="radio" name="size" value="6" onChange="getSize()"/><span>6 * 6</span></label>
+                <label><input type="radio" name="size" value="7" onChange="getSize()"/><span>7 * 7</span></label>
+                <label><input type="radio" name="size" value="8" onChange="getSize()"/><span>8 * 8</span></label>
+            </div>
+        </div>
+    </header>
+
+    <div id="boardWrapper" class="board-wrapper">
+        <div class="board-wrapper2">
+            <div id="board" class="board"></div>
+        </div>
+    </div>
+    <footer>
+        <div class="keypad">
+            <div>1</div>
+            <div>2</div>
+            <div>3</div>
+            <div>4</div>
+            <div>5</div>
+            <div>6</div>
+            <div>7</div>
+            <div>8</div>
+            <div>9</div>
+            <div class="no-click"></div>
+            <div>0</div>
+            <div class="no-click"></div>
+        </div>
+    </footer>
+
+    <script>
+        const qs = function(t){return document.querySelector(t);}
+        const qsa = function(t){return document.querySelectorAll(t);}
+
+
+        window.addEventListener('resize', function(){
+            getSize();
+        });
+
+        
+        getSize();
+        setRdmNum();
+        
+
+        function getSize(){
+            const blockLen = qs('#sizes input:checked').value;
+            const window_w = window.innerWidth;
+            const window_h = window.innerHeight;
+
+            const capaSpace = window_h - qs('footer').clientHeight - qs('header').clientHeight;
+
+            let size1 = '';
+
+            if(window_w - capaSpace >= 0) size1 = capaSpace;
+            else size1 = window_w;
+
+            size1 = (parseInt(size1 / 10) * 10) - 20;
+
+            qs('#boardWrapper').style.width = size1 + 'px';
+            qs('#boardWrapper').style.height = size1 + 'px';
+
+            qs('#board').innerHTML = '';
+
+            for(let i = 0; i < (blockLen * blockLen); i++){
+                const div = document.createElement('div');
+                const div2 = document.createElement('div');
+                div.style.cssText = 'width: ' + (100 / blockLen) + '%; height: ' + (100 / blockLen) + '%;';
+                div2.innerText = 8;
+                div2.style.fontSize = (size1 / blockLen * 0.4) + 'px';
+
+                qs('#board').appendChild(div);
+                div.appendChild(div2);
+            }
+
+            qs('#board').setAttribute('data-len', blockLen);
+            qs('#boardWrapper').style.top = (qs('header').clientHeight + ((capaSpace - size1) / 2)) + 'px';
+        }
+
+        function getRandomNum(mn, mx){return Math.floor(Math.random() * (mx - mn + 1)) + mn;};
+
+        function setRdmNum(){
+            const blockLen = qs('#sizes input:checked').value;
+            for(let i = 0; i < (blockLen * blockLen); i++){
+                qsa('#board > div')[i].querySelector('div').innerText = getRandomNum(0, 9);
+            }
+        }
+    </script>
+
+
+
+    <!--script>
+        const qs = function(t){return document.querySelector(t);}
+        const qsa = function(t){return document.querySelectorAll(t);}
+
+        const vlank2 = new vlank();
+        
+        qs('#layer').addEventListener('click', function(e){ //레이어팝업쪽
+            const ids = e.target.id;
+            const textContent = qs('#textContent');
+            const blankCntSelect = qs('#blankCntPop select');
+            switch(ids){
+                case 'btn_init':
+                    textContent.value = '';
+                break;
+                case 'btn_vlank2':
+                    vlank2.makeBlank(vlank2.text, qs('#blankCntPop select').value);
+                    qs('#layer').classList.remove('on');
+
+                break;
+                case 'btn_add':
+                    if(textContent.value === ''){
+                        alert('내용을 입력해주세요.');
+                        return;
+                    }
+                    
+                    vlank2.setText(textContent.value);
+
+                    qs('#viewer').innerHTML = vlank2.text;
+
+
+                case 'layer':
+                case 'btn_layerClose':
+                    this.classList.remove('on');
+                break;
+            }
+        });
+
+        qs('#header').addEventListener('click', function(e){    //header쪽 버튼
+            const ids = e.target.id;
+            switch(ids){
+                case 'btn_textView':
+                    qs('#layer').classList.add('on');
+                    qs('#blankCntPop').classList.remove('on');
+                    qs('#textAreaPop').classList.add('on');
+                    qs('#layer textarea').focus();
+                break;
+                case 'btn_vlank':
+                    if(vlank2.text === ''){
+                        alert('내용을 추가해 주세요.');
+                        return;
+                    }
+                    
+                    qs('#layer').classList.add('on');
+                    qs('#textAreaPop').classList.remove('on');
+                    qs('#blankCntPop').classList.add('on');
+                    qs('#blankCntPop select').innerHTML = '';
+
+                    const wordCnt = vlank2.getBlockCntRange();
+                    for(let i = 0; i < wordCnt; i++){
+                        const option = document.createElement('option');
+                        option.value = i + 1;
+                        option.innerText = i + 1;
+
+                        qs('#blankCntPop select').appendChild(option);
+                    }
+
+                    qsa('#blankCntPop select option')[parseInt(wordCnt / 2)].setAttribute('selected', true);
+                break;
+            }
+        })
+
+        function getRandomNum(mn, mx, exceptArr){
+            let rdmNum = Math.floor(Math.random() * (mx - mn + 1)) + mn;
+            if(exceptArr != undefined){
+                for(let i = 0; i < exceptArr.length; i++){
+                    if(exceptArr[i] == rdmNum) return getRandomNum(mn, mx, exceptArr);
+                    break;
+                }
+            }
+
+            return rdmNum;
+        };
+
+        function vlank(target, option) {
+
+            const t = this;
+            t.text = '';
+            t.textArr = [];
+
+            this.makeBlank = function(txt, cnt){
+                if(cnt === 0 || cnt === undefined || isNaN(cnt)) return;
+
+                const wordIdxArr = [];
+                const pickedIdxArr = [];
+                const txtInfoArr = [];
+
+                for(let i = 0; i < t.textArr.length; i++){  //모든 text for문
+                    const tmpObj = {idx: i, txt: t.textArr[i], isBlank: false};
+                    txtInfoArr.push(tmpObj);
+
+                    if(t.textArr[i] != '' && t.textArr[i] != '\n') wordIdxArr.push(i);
+                }
+
+                for(let i = 0; i < cnt; i++){
+                    pickedIdxArr.push(wordIdxArr.splice(getRandomNum(0, wordIdxArr.length - 1), 1)[0]);
+                }
+
+                for(let i = 0; i < pickedIdxArr.length; i++){
+                    txtInfoArr[pickedIdxArr[i]].isBlank = true;
+                };
+
+
+                let finalTxt = '';
+
+                for(let i = 0; i < txtInfoArr.length; i++){
+                    finalTxt += txtInfoArr[i].isBlank ? '<span data-hidden="' + txtInfoArr[i].txt + '">' + txtInfoArr[i].txt + '</span>' : txtInfoArr[i].txt;
+                    if(txtInfoArr.length - 1 !== i) finalTxt += ' ';
+                }
+
+                qs('#viewer').innerHTML = finalTxt;
+            }
+
+            this.setText = function(txt){
+                const txtArr = txt.split(' ');
+                const txtArr2 = [];
+                for(let i = 0; i < txtArr.length; i++){
+                    if(txtArr[i].indexOf('\n') > -1){
+                        const tmpArr = txtArr[i].split('\n').join(' \n ').split(' ');
+                        for(let j = 0; j < tmpArr.length; j++){
+                            txtArr2.push(tmpArr[j]);
+                        }
+                    }else{
+                        txtArr2.push(txtArr[i]);
+                    }
+                }
+
+                t.textArr =  txtArr2;
+                t.text = txtArr2.join(' ').split(' \n ').join('\n');
+            }
+
+
+            this.getBlockCntRange = function(){
+                let cnt = 0;
+
+                for(let i = 0; i < t.textArr.length; i++){
+                    if(t.textArr[i] != '' && t.textArr[i] != '\n') cnt++;
+                }
+
+                return cnt;
+            }
+
+            // this.strToArr = function(){
+            //     return t.text.split(/\s/);
+            // }
+        }
+
+
+    </script-->
+
+</body>
+</html>
