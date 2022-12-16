@@ -35,7 +35,7 @@
         .board-wrapper{position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 100px;}
         .board-wrapper2{border-radius: 50%; width: 100%; height: 100%; background: gainsboro; display: flex; align-items: center; justify-content: center;}
         .board{width: 70%; height: 70%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;}
-        .board > div{box-sizing: border-box; padding: 3px;}
+        .board > div{box-sizing: border-box; padding: 2px;}
         .board > div > div{
             box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: red;
             width: 100%; height: 100%;
@@ -55,8 +55,8 @@
         <div class="header-top">
             <h1 class="logo">typy!ng</h1>
             <div>
-                <button id="btn_init1" class="btn-init">초기화</button>
-                <button id="btn_start" class="btn-start">시작</button>
+                <button class="btn-init">초기화</button>
+                <button class="btn-start" onclick="startGame();">시작</button>
             </div>
         </div>
         <div class="heder-bottom">
@@ -76,19 +76,19 @@
         </div>
     </div>
     <footer>
-        <div class="keypad">
-            <div>1</div>
-            <div>2</div>
-            <div>3</div>
-            <div>4</div>
-            <div>5</div>
-            <div>6</div>
-            <div>7</div>
-            <div>8</div>
-            <div>9</div>
-            <div class="no-click"></div>
-            <div>0</div>
-            <div class="no-click"></div>
+        <div id="keyPad" class="keypad">
+            <div onclick="typing.answer(this)">1</div>
+            <div onclick="typing.answer(this)">2</div>
+            <div onclick="typing.answer(this)">3</div>
+            <div onclick="typing.answer(this)">4</div>
+            <div onclick="typing.answer(this)">5</div>
+            <div onclick="typing.answer(this)">6</div>
+            <div onclick="typing.answer(this)">7</div>
+            <div onclick="typing.answer(this)">8</div>
+            <div onclick="typing.answer(this)">9</div>
+            <div></div>
+            <div onclick="typing.answer(this)">0</div>
+            <div></div>
         </div>
     </footer>
 
@@ -103,7 +103,7 @@
 
         
         getSize();
-        setRdmNum();
+        const typing = new Typing();
         
 
         function getSize(){
@@ -129,7 +129,7 @@
                 const div = document.createElement('div');
                 const div2 = document.createElement('div');
                 div.style.cssText = 'width: ' + (100 / blockLen) + '%; height: ' + (100 / blockLen) + '%;';
-                div2.innerText = 8;
+                div2.innerText = '?';
                 div2.style.fontSize = (size1 / blockLen * 0.4) + 'px';
 
                 qs('#board').appendChild(div);
@@ -147,6 +147,28 @@
             for(let i = 0; i < (blockLen * blockLen); i++){
                 qsa('#board > div')[i].querySelector('div').innerText = getRandomNum(0, 9);
             }
+        }
+
+        function startGameUI(){}
+
+        function Typing(){
+            const t = this;
+            t.start = false;
+            t.end = false;
+            
+            t.curIdx = 0;
+            
+            t.startGame = function(){
+                setRdmNum();
+                startGameUI();
+            }
+
+            t.answer = function(e){
+                if(t.start === false)  return;
+                console.log(e.innerText);
+            }
+
+
         }
     </script>
 
