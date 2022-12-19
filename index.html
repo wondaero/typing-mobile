@@ -17,6 +17,9 @@
             border-radius: 5px; width: 80px; cursor: pointer; font-weight: 900;
         }
 
+        .btn-init{background: #f00;}
+        .btn-start{background: #00f;}
+
         .sizes span{
           display: inline-block; padding: 8px 10px; width: 35px; background: #ddd; border-radius: 5px; transition: .5s;
           text-align: center; font-size: 12px; cursor: pointer; font-weight: 900;
@@ -33,19 +36,40 @@
 
 
         .board-wrapper{position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 100px;}
-        .board-wrapper2{border-radius: 50%; width: 100%; height: 100%; background: gainsboro; display: flex; align-items: center; justify-content: center;}
+        .board-wrapper2{
+            border-radius: 50%; width: 100%; height: 100%; background: gainsboro; display: flex; align-items: center; justify-content: center;
+            position: relative; top: 0; left: 0;
+        }
         .board{width: 70%; height: 70%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;}
         .board > div{box-sizing: border-box; padding: 2px;}
         .board > div > div{
-            box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: red;
-            width: 100%; height: 100%;
+            box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #000;
+            width: 100%; height: 100%; color: #fff;
         }
+        .board > div.on > div{color: red; font-weight: 900;}
         footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee;}
         .keypad{display: flex; align-items: center; justify-content: center; flex-wrap: wrap; width: 150px;}
         .keypad > div{width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: gray;}
         .keypad > div{margin-right: 5px; margin-bottom: 5px;}
         .keypad > div:nth-child(3n){margin-right: 0;}
         .keypad > div:nth-child(n + 10){margin-bottom: 0;}
+        
+        .rotate1{animation: rotate1 .7s infinite linear;}
+        .scale1{animation: scale1 .3s infinite linear;}
+        .offset1{left: -100%; animation: offset1 .5s infinite linear;}
+        .offset2{top: -100%; animation: offset2 .5s infinite linear;}
+
+
+        @keyframes rotate1{100%{transform: rotate(360deg);}}
+        @keyframes scale1{100%{transform: scale(5);}}
+        @keyframes offset1{100%{left: 100%;}}
+        @keyframes offset2{100%{top: 100%;}}
+
+        aside{
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; display: none;
+            align-items: center; justify-content: center; z-index: 3; text-align: center;
+        }
+        aside.on{display: flex;}
     </style>
 
 </head>
@@ -55,8 +79,8 @@
         <div class="header-top">
             <h1 class="logo">typy!ng</h1>
             <div>
-                <button class="btn-init">초기화</button>
-                <button class="btn-start" onclick="startGame();">시작</button>
+                <button class="btn-init" onclick="typing.init();">초기화</button>
+                <button id="" class="btn-start" onclick="typing.startGame();">시작</button>
             </div>
         </div>
         <div class="heder-bottom">
@@ -71,7 +95,7 @@
     </header>
 
     <div id="boardWrapper" class="board-wrapper">
-        <div class="board-wrapper2">
+        <div id="boardWrapper2" class="board-wrapper2">
             <div id="board" class="board"></div>
         </div>
     </div>
@@ -91,6 +115,12 @@
             <div></div>
         </div>
     </footer>
+    <aside>
+        <div>
+            <h1>세로모드만 지원합니다.</h1>
+            <button onclick="typing.init('mode');">reload</button>
+        </div>
+    </aside>
 
     <script>
         const qs = function(t){return document.querySelector(t);}
@@ -110,6 +140,13 @@
             const blockLen = qs('#sizes input:checked').value;
             const window_w = window.innerWidth;
             const window_h = window.innerHeight;
+
+            if(window_h < 200 || window_w >= window_h){
+                qs('aside').classList.add('on');
+            }else{
+                qs('aside').classList.remove('on');
+            }
+
 
             const capaSpace = window_h - qs('footer').clientHeight - qs('header').clientHeight;
 
@@ -145,20 +182,35 @@
         function setRdmNum(){
             const blockLen = qs('#sizes input:checked').value;
             for(let i = 0; i < (blockLen * blockLen); i++){
+                
                 qsa('#board > div')[i].querySelector('div').innerText = getRandomNum(0, 9);
             }
+
         }
 
-        function startGameUI(){}
+        function startGameUI(){
+            qs('#board').querySelectorAll('div')[0].classList.add('on');
+            qsa('#sizes input').forEach(function(input){
+                input.setAttribute('disabled', true);
+            })
+
+            typing.animationIdx = getRandomNum(0, (typing.animation.length - 1));
+            qs('#boardWrapper2').classList.add(typing.animation[typing.animationIdx]);
+        }
 
         function Typing(){
             const t = this;
             t.start = false;
             t.end = false;
-            
             t.curIdx = 0;
-            
+            t.blockCnt = 0;
+            t.animation = ['rotate1', 'scale1', 'offset1', 'offset2', 'normal'];
+            t.animationIdx = 0;
+
             t.startGame = function(){
+                if(t.start) return;
+                t.blockCnt = qs('#sizes input:checked').value * qs('#sizes input:checked').value;
+                t.start = new Date().getTime();
                 setRdmNum();
                 startGameUI();
             }
@@ -166,172 +218,27 @@
             t.answer = function(e){
                 if(t.start === false)  return;
                 console.log(e.innerText);
+                const onValue = qs('#board').querySelector('div.on div').innerText;
+                if(e.innerText == onValue){
+                    if(t.curIdx++ < (t.blockCnt - 1)){
+                        qs('#board').querySelector('div.on').classList.remove('on');
+                        qs('#board').querySelectorAll(':scope > div')[t.curIdx].classList.add('on');
+                    }else{
+                        t.end = new Date().getTime();
+                        alert(t.animation[t.animationIdx] + '\n' + ((t.end - t.start) / 1000) + '초');
+                    }
+                }
             }
 
-
+            t.init = function(type){
+                if(type == 'mode'){
+                    location.reload();
+                    return;
+                }
+                if(t.start === false) return;
+                if(confirm('초기화하시겠습니까?')) location.reload();
+            }
         }
     </script>
-
-
-
-    <!--script>
-        const qs = function(t){return document.querySelector(t);}
-        const qsa = function(t){return document.querySelectorAll(t);}
-
-        const vlank2 = new vlank();
-        
-        qs('#layer').addEventListener('click', function(e){ //레이어팝업쪽
-            const ids = e.target.id;
-            const textContent = qs('#textContent');
-            const blankCntSelect = qs('#blankCntPop select');
-            switch(ids){
-                case 'btn_init':
-                    textContent.value = '';
-                break;
-                case 'btn_vlank2':
-                    vlank2.makeBlank(vlank2.text, qs('#blankCntPop select').value);
-                    qs('#layer').classList.remove('on');
-
-                break;
-                case 'btn_add':
-                    if(textContent.value === ''){
-                        alert('내용을 입력해주세요.');
-                        return;
-                    }
-                    
-                    vlank2.setText(textContent.value);
-
-                    qs('#viewer').innerHTML = vlank2.text;
-
-
-                case 'layer':
-                case 'btn_layerClose':
-                    this.classList.remove('on');
-                break;
-            }
-        });
-
-        qs('#header').addEventListener('click', function(e){    //header쪽 버튼
-            const ids = e.target.id;
-            switch(ids){
-                case 'btn_textView':
-                    qs('#layer').classList.add('on');
-                    qs('#blankCntPop').classList.remove('on');
-                    qs('#textAreaPop').classList.add('on');
-                    qs('#layer textarea').focus();
-                break;
-                case 'btn_vlank':
-                    if(vlank2.text === ''){
-                        alert('내용을 추가해 주세요.');
-                        return;
-                    }
-                    
-                    qs('#layer').classList.add('on');
-                    qs('#textAreaPop').classList.remove('on');
-                    qs('#blankCntPop').classList.add('on');
-                    qs('#blankCntPop select').innerHTML = '';
-
-                    const wordCnt = vlank2.getBlockCntRange();
-                    for(let i = 0; i < wordCnt; i++){
-                        const option = document.createElement('option');
-                        option.value = i + 1;
-                        option.innerText = i + 1;
-
-                        qs('#blankCntPop select').appendChild(option);
-                    }
-
-                    qsa('#blankCntPop select option')[parseInt(wordCnt / 2)].setAttribute('selected', true);
-                break;
-            }
-        })
-
-        function getRandomNum(mn, mx, exceptArr){
-            let rdmNum = Math.floor(Math.random() * (mx - mn + 1)) + mn;
-            if(exceptArr != undefined){
-                for(let i = 0; i < exceptArr.length; i++){
-                    if(exceptArr[i] == rdmNum) return getRandomNum(mn, mx, exceptArr);
-                    break;
-                }
-            }
-
-            return rdmNum;
-        };
-
-        function vlank(target, option) {
-
-            const t = this;
-            t.text = '';
-            t.textArr = [];
-
-            this.makeBlank = function(txt, cnt){
-                if(cnt === 0 || cnt === undefined || isNaN(cnt)) return;
-
-                const wordIdxArr = [];
-                const pickedIdxArr = [];
-                const txtInfoArr = [];
-
-                for(let i = 0; i < t.textArr.length; i++){  //모든 text for문
-                    const tmpObj = {idx: i, txt: t.textArr[i], isBlank: false};
-                    txtInfoArr.push(tmpObj);
-
-                    if(t.textArr[i] != '' && t.textArr[i] != '\n') wordIdxArr.push(i);
-                }
-
-                for(let i = 0; i < cnt; i++){
-                    pickedIdxArr.push(wordIdxArr.splice(getRandomNum(0, wordIdxArr.length - 1), 1)[0]);
-                }
-
-                for(let i = 0; i < pickedIdxArr.length; i++){
-                    txtInfoArr[pickedIdxArr[i]].isBlank = true;
-                };
-
-
-                let finalTxt = '';
-
-                for(let i = 0; i < txtInfoArr.length; i++){
-                    finalTxt += txtInfoArr[i].isBlank ? '<span data-hidden="' + txtInfoArr[i].txt + '">' + txtInfoArr[i].txt + '</span>' : txtInfoArr[i].txt;
-                    if(txtInfoArr.length - 1 !== i) finalTxt += ' ';
-                }
-
-                qs('#viewer').innerHTML = finalTxt;
-            }
-
-            this.setText = function(txt){
-                const txtArr = txt.split(' ');
-                const txtArr2 = [];
-                for(let i = 0; i < txtArr.length; i++){
-                    if(txtArr[i].indexOf('\n') > -1){
-                        const tmpArr = txtArr[i].split('\n').join(' \n ').split(' ');
-                        for(let j = 0; j < tmpArr.length; j++){
-                            txtArr2.push(tmpArr[j]);
-                        }
-                    }else{
-                        txtArr2.push(txtArr[i]);
-                    }
-                }
-
-                t.textArr =  txtArr2;
-                t.text = txtArr2.join(' ').split(' \n ').join('\n');
-            }
-
-
-            this.getBlockCntRange = function(){
-                let cnt = 0;
-
-                for(let i = 0; i < t.textArr.length; i++){
-                    if(t.textArr[i] != '' && t.textArr[i] != '\n') cnt++;
-                }
-
-                return cnt;
-            }
-
-            // this.strToArr = function(){
-            //     return t.text.split(/\s/);
-            // }
-        }
-
-
-    </script-->
-
 </body>
 </html>
