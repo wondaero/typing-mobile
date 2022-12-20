@@ -34,11 +34,9 @@
         .sizes label:nth-child(4) input:checked + span{background: blue; color: #fff;}
         .sizes label:nth-child(5) input:checked + span{background: purple; color: #fff;}
 
-
         .board-wrapper{position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 100px;}
         .board-wrapper2{
             border-radius: 50%; width: 100%; height: 100%; background: gainsboro; display: flex; align-items: center; justify-content: center;
-            position: relative; top: 0; left: 0;
         }
         .board{width: 70%; height: 70%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;}
         .board > div{box-sizing: border-box; padding: 2px;}
@@ -47,29 +45,31 @@
             width: 100%; height: 100%; color: #fff;
         }
         .board > div.on > div{color: red; font-weight: 900;}
+        .board > div.done{transform: scale(0); transition: transform .5s cubic-bezier(0.68, -0.55, 0.27, 1.55);}
         footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee;}
-        .keypad{display: flex; align-items: center; justify-content: center; flex-wrap: wrap; width: 150px;}
-        .keypad > div{width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: gray;}
-        .keypad > div{margin-right: 5px; margin-bottom: 5px;}
+        .keypad{display: flex; align-items: center; justify-content: center; flex-wrap: wrap; width: 270px; position: relative;}
+        .keypad.wrong{animation: wrong .2s alternate;}
+        .keypad > div{
+            width: 80px; height: 45px; border-radius: 5px; display: flex; align-items: center; justify-content: center; background: gray;
+            color: #fff; font-weight: 900; font-size: 30px;
+        }
+        .keypad > div.hover:hover{background: #ffc800; color: #000;}
+        .keypad > div{margin-right: 3px; margin-bottom: 3px;}
         .keypad > div:nth-child(3n){margin-right: 0;}
         .keypad > div:nth-child(n + 10){margin-bottom: 0;}
-        
-        .rotate1{animation: rotate1 .7s infinite linear;}
-        .scale1{animation: scale1 .3s infinite linear;}
-        .offset1{left: -100%; animation: offset1 .5s infinite linear;}
-        .offset2{top: -100%; animation: offset2 .5s infinite linear;}
-
-
-        @keyframes rotate1{100%{transform: rotate(360deg);}}
-        @keyframes scale1{100%{transform: scale(5);}}
-        @keyframes offset1{100%{left: 100%;}}
-        @keyframes offset2{100%{top: 100%;}}
 
         aside{
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; display: none;
             align-items: center; justify-content: center; z-index: 3; text-align: center;
         }
         aside.on{display: flex;}
+
+        @keyframes wrong{
+            25%{left: 20px;}
+            50%{left: -20px;}
+            70%{left: 20px;}
+            100%{left: -20px;}
+        }
     </style>
 
 </head>
@@ -101,17 +101,17 @@
     </div>
     <footer>
         <div id="keyPad" class="keypad">
-            <div onclick="typing.answer(this)">1</div>
-            <div onclick="typing.answer(this)">2</div>
-            <div onclick="typing.answer(this)">3</div>
-            <div onclick="typing.answer(this)">4</div>
-            <div onclick="typing.answer(this)">5</div>
-            <div onclick="typing.answer(this)">6</div>
-            <div onclick="typing.answer(this)">7</div>
-            <div onclick="typing.answer(this)">8</div>
-            <div onclick="typing.answer(this)">9</div>
+            <div class="hover" onclick="typing.answer(this)">1</div>
+            <div class="hover" onclick="typing.answer(this)">2</div>
+            <div class="hover" onclick="typing.answer(this)">3</div>
+            <div class="hover" onclick="typing.answer(this)">4</div>
+            <div class="hover" onclick="typing.answer(this)">5</div>
+            <div class="hover" onclick="typing.answer(this)">6</div>
+            <div class="hover" onclick="typing.answer(this)">7</div>
+            <div class="hover" onclick="typing.answer(this)">8</div>
+            <div class="hover" onclick="typing.answer(this)">9</div>
             <div></div>
-            <div onclick="typing.answer(this)">0</div>
+            <div class="hover" onclick="typing.answer(this)">0</div>
             <div></div>
         </div>
     </footer>
@@ -194,8 +194,6 @@
                 input.setAttribute('disabled', true);
             })
 
-            typing.animationIdx = getRandomNum(0, (typing.animation.length - 1));
-            qs('#boardWrapper2').classList.add(typing.animation[typing.animationIdx]);
         }
 
         function Typing(){
@@ -204,8 +202,6 @@
             t.end = false;
             t.curIdx = 0;
             t.blockCnt = 0;
-            t.animation = ['rotate1', 'scale1', 'offset1', 'offset2', 'normal'];
-            t.animationIdx = 0;
 
             t.startGame = function(){
                 if(t.start) return;
@@ -221,12 +217,18 @@
                 const onValue = qs('#board').querySelector('div.on div').innerText;
                 if(e.innerText == onValue){
                     if(t.curIdx++ < (t.blockCnt - 1)){
+                        qs('#board').querySelector('div.on').classList.add('done');
                         qs('#board').querySelector('div.on').classList.remove('on');
                         qs('#board').querySelectorAll(':scope > div')[t.curIdx].classList.add('on');
                     }else{
                         t.end = new Date().getTime();
-                        alert(t.animation[t.animationIdx] + '\n' + ((t.end - t.start) / 1000) + '초');
+                        alert(((t.end - t.start) / 1000) + '초');
                     }
+                }else{
+                    qs('#keyPad').classList.add('wrong');
+                    qs('#keyPad').addEventListener('animationend', function(){
+                        qs('#keyPad').classList.remove('wrong');
+                    })
                 }
             }
 
