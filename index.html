@@ -21,7 +21,7 @@
         .btn-start{background: #00f;}
 
         .sizes span{
-          display: inline-block; padding: 8px 10px; width: 35px; background: #ddd; border-radius: 5px; transition: .5s;
+          display: inline-block; padding: 8px 10px; width: 28px; background: #ddd; border-radius: 5px; transition: .5s;
           text-align: center; font-size: 12px; cursor: pointer; font-weight: 900;
         }
 
@@ -46,7 +46,12 @@
         }
         .board > div.on > div{color: #ffc800; font-weight: 900;}
         .board > div.done{transform: scale(0); transition: transform .5s cubic-bezier(0.68, -0.55, 0.27, 1.55);}
-        footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee;}
+        footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee; flex-wrap: wrap;}
+        .timer{width: 100%; height: 20px; font-weight: 900; text-align: center; line-height: 20px; position: relative; border-radius: 300px; top: -30px;}
+        .timer > span{
+            width: 150px; background: #eee; height: 20px; font-weight: 900; text-align: center; line-height: 20px; position: relative; top: 10px;
+            display: inline-block; border-radius: 150px;
+        }
         .keypad{display: flex; align-items: center; justify-content: center; flex-wrap: wrap; width: 270px; position: relative;}
         .keypad.wrong{animation: wrong .2s alternate;}
         .keypad > div{
@@ -100,6 +105,7 @@
         </div>
     </div>
     <footer>
+        <div id="timer" class="timer"><span></span></div>
         <div id="keyPad" class="keypad">
             <div class="hover" onclick="typing.answer(this)">1</div>
             <div class="hover" onclick="typing.answer(this)">2</div>
@@ -182,7 +188,6 @@
         function setRdmNum(){
             const blockLen = qs('#sizes input:checked').value;
             for(let i = 0; i < (blockLen * blockLen); i++){
-                
                 qsa('#board > div')[i].querySelector('div').innerText = getRandomNum(0, 9);
             }
 
@@ -209,6 +214,15 @@
                 t.start = new Date().getTime();
                 setRdmNum();
                 startGameUI();
+                t.timer();
+            }
+
+            t.timer = function(){
+                const nowTime = new Date().getTime();
+                if(t.end === false){
+                    qs('#timer > span').innerText = ((nowTime - t.start) / 1000) + '초';
+                    requestAnimationFrame(t.timer);
+                }
             }
 
             t.answer = function(e){
@@ -223,6 +237,7 @@
                         qs('#board').querySelectorAll(':scope > div')[t.curIdx].classList.add('on');
                     }else{
                         t.end = new Date().getTime();
+                        qs('#timer > span').innerText = ((t.end - t.start) / 1000) + '초';
                         setTimeout(function(){
                             alert(((t.end - t.start) / 1000) + '초');
                         }, 500);
