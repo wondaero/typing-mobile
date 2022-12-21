@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>typy!ng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="./assets/css/normalize.css">
+    <style>
+        .logo{position: fixed; top: 10px; left: 10px; transform: rotate(-15deg); text-decoration: none; color: #000;}
+        .logo:after{
+            content: ''; display: block; position: absolute; bottom: -3px; left: 0; right: 0; height: 5px;
+            background: linear-gradient(to right, red, orange, yellow, green, blue, navy, purple);
+            opacity: .5;
+        }
+
+        .board-wrapper{position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 100px;}
+        .board{width: 100%; height: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;}
+        .board > div{box-sizing: border-box;}
+        .board > div > div{
+            box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #000;
+            width: 100%; height: 100%; color: #fff;
+        }
+        .board > div.on > div{color: #ffc800; font-weight: 900;}
+        .board > div.done{transform: scale(0); transition: transform .5s cubic-bezier(0.68, -0.55, 0.27, 1.55);}
+
+
+        footer{position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 10px 0; background: #eee; flex-wrap: wrap;}
+
+        .timer{
+            width: 150px; height: 20px; font-weight: 900; text-align: center; line-height: 20px; position: absolute; border-radius: 300px; top: -20px;
+            left: 50%; transform: translateX(-50%);
+        }
+        .timer > span{
+            background: #eee; height: 20px; font-weight: 900; text-align: center; line-height: 20px; position: relative; top: 10px;
+            display: inline-block; border-radius: 150px; width: 100%;
+        }
+
+        header .header-top{display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;}
+        header button{
+            background: #eee; border: 0; outline: 0; height: auto; color: #fff; padding: 8px 10px;
+            border-radius: 5px; width: 80px; cursor: pointer; font-weight: 900;
+        }
+
+        header .btn-init{background: #f00;}
+        header .btn-start{background: #00f;}
+
+        .sizes{margin-bottom: 10px;}
+        .sizes span{
+          display: inline-block; padding: 8px 10px; width: 28px; background: #ddd; border-radius: 5px; transition: .5s;
+          text-align: center; font-size: 12px; cursor: pointer; font-weight: 900;
+        }
+
+        .sizes input{display: none;}
+        .sizes input[name="size2"] + span{cursor: not-allowed;}
+        
+        .sizes label:nth-child(1) input:checked + span{background: red; color: #fff;}
+        .sizes label:nth-child(2) input:checked + span{background: yellow; color: #000;}
+        .sizes label:nth-child(3) input:checked + span{background: green; color: #fff;}
+        .sizes label:nth-child(4) input:checked + span{background: blue; color: #fff;}
+        .sizes label:nth-child(5) input:checked + span{background: purple; color: #fff;}
+
+        .rainbow-line{
+            background: linear-gradient(to right, red, orange, yellow, green, blue, navy, purple);
+            width: 100%; height: 3px; margin-bottom: 10px;
+        }
+
+        .keypad{align-items: center; justify-content: center; flex-wrap: wrap; width: 270px; position: relative; display: none;}
+        .keypad.on{display: flex;}
+        .keypad.wrong{animation: wrong .2s alternate;}
+
+        .keypad > div{width: 100%; display: flex; align-items: center; justify-content: center;}
+        .keypad-kor > div, .keypad-en > div{margin-bottom: 5px;}
+        .keypad-kor > div:last-child, .keypad-en > div:last-child{margin-bottom: 0;}
+        .keypad > div > div{
+            height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd; margin-right: 5px; color: #fff;
+            box-sizing: border-box; box-shadow: inset 0 0 5px rgba(255, 255, 255, .5); background: black; border-radius: 5px; font-weight: 900;
+            margin-bottom: 5px;
+        }
+        .keypad-kor > div > div, .keypad-en > div > div{width: 22px; height: 50px; display: flex; align-items: center; justify-content: center;}
+        .keypad-kor > div > div:last-child, .keypad-en > div > div:last-child{margin-right: 0;}
+        .keypad-num > div{flex-wrap: wrap;}
+        .keypad-num > div > div{width: 80px; font-size: 30px;}
+        .keypad-num > div > div:nth-child(3n){margin-right: 0;}
+        .keypad-num > div > div:nth-child(n + 10){margin-bottom: 0;}
+        
+        .keypad > div > div.hover:hover{background: #ffc800; color: #000;}
+
+        aside{
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; display: none;
+            align-items: center; justify-content: center; z-index: 3; text-align: center;
+        }
+        aside.on{display: flex;}
+
+        @keyframes wrong{
+            25%{left: 20px;}
+            50%{left: -20px;}
+            70%{left: 20px;}
+            100%{left: -20px;}
+        }
+    </style>
+
+</head>
+<body>
+    <a href="./index.html" class="logo">typ!ng</a>
+    <div id="boardWrapper" class="board-wrapper">
+        <div id="board" class="board"></div>
+    </div>
+
+    <footer>
+        <header>
+            <div id="timer" class="timer"><span></span></div>
+            <div class="header-top">
+                <button class="btn-init" onclick="typing.init();">초기화</button>
+                <button id="" class="btn-start" onclick="typing.startGame();">시작</button>
+            </div>
+            <div class="heder-bottom">
+                <div id="sizes" class="sizes">
+                    <label><input type="radio" name="size" value="4" onChange="createBoard()"/><span>4 * 4</span></label>
+                    <label><input type="radio" name="size" value="5" onChange="createBoard()" checked/><span>5 * 5</span></label>
+                    <label><input type="radio" name="size" value="6" onChange="createBoard()"/><span>6 * 6</span></label>
+                    <label><input type="radio" name="size" value="7" onChange="createBoard()"/><span>7 * 7</span></label>
+                    <label><input type="radio" name="size" value="8" onChange="createBoard()"/><span>8 * 8</span></label>
+                </div>
+            </div>
+        </header>
+
+        <div class="rainbow-line"></div>
+
+        <div class="keypad keypad-num" data-subject="math">
+            <div>
+                <div class="hover" onclick="typing.answer(this)">1</div>
+                <div class="hover" onclick="typing.answer(this)">2</div>
+                <div class="hover" onclick="typing.answer(this)">3</div>
+                <div class="hover" onclick="typing.answer(this)">4</div>
+                <div class="hover" onclick="typing.answer(this)">5</div>
+                <div class="hover" onclick="typing.answer(this)">6</div>
+                <div class="hover" onclick="typing.answer(this)">7</div>
+                <div class="hover" onclick="typing.answer(this)">8</div>
+                <div class="hover" onclick="typing.answer(this)">9</div>
+                <div></div>
+                <div class="hover" onclick="typing.answer(this)">0</div>
+                <div></div>
+            </div>
+        </div>
+
+
+        <div class="keypad keypad-kor" data-subject="korean">
+            <div>
+                <div class="hover" onclick="typing.answer(this)">ㅂ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅈ</div>
+                <div class="hover" onclick="typing.answer(this)">ㄷ</div>
+                <div class="hover" onclick="typing.answer(this)">ㄱ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅅ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅛ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅕ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅑ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅐ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅔ</div>
+            </div>
+            <div>
+                <div class="hover" onclick="typing.answer(this)">ㅁ</div>
+                <div class="hover" onclick="typing.answer(this)">ㄴ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅇ</div>
+                <div class="hover" onclick="typing.answer(this)">ㄹ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅎ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅗ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅓ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅏ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅣ</div>
+            </div>
+            <div>
+                <div class="hover" onclick="typing.answer(this)">ㅋ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅌ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅊ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅍ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅠ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅜ</div>
+                <div class="hover" onclick="typing.answer(this)">ㅡ</div>
+            </div>
+        </div>
+
+        <div class="keypad keypad-en" data-subject="english">
+            <div>
+                <div class="hover" onclick="typing.answer(this)">q</div>
+                <div class="hover" onclick="typing.answer(this)">w</div>
+                <div class="hover" onclick="typing.answer(this)">e</div>
+                <div class="hover" onclick="typing.answer(this)">r</div>
+                <div class="hover" onclick="typing.answer(this)">t</div>
+                <div class="hover" onclick="typing.answer(this)">y</div>
+                <div class="hover" onclick="typing.answer(this)">u</div>
+                <div class="hover" onclick="typing.answer(this)">i</div>
+                <div class="hover" onclick="typing.answer(this)">o</div>
+                <div class="hover" onclick="typing.answer(this)">p</div>
+            </div>
+            <div>
+                <div class="hover" onclick="typing.answer(this)">a</div>
+                <div class="hover" onclick="typing.answer(this)">s</div>
+                <div class="hover" onclick="typing.answer(this)">d</div>
+                <div class="hover" onclick="typing.answer(this)">f</div>
+                <div class="hover" onclick="typing.answer(this)">g</div>
+                <div class="hover" onclick="typing.answer(this)">h</div>
+                <div class="hover" onclick="typing.answer(this)">j</div>
+                <div class="hover" onclick="typing.answer(this)">k</div>
+                <div class="hover" onclick="typing.answer(this)">l</div>
+            </div>
+            <div>
+                <div class="hover" onclick="typing.answer(this)">z</div>
+                <div class="hover" onclick="typing.answer(this)">x</div>
+                <div class="hover" onclick="typing.answer(this)">c</div>
+                <div class="hover" onclick="typing.answer(this)">v</div>
+                <div class="hover" onclick="typing.answer(this)">b</div>
+                <div class="hover" onclick="typing.answer(this)">n</div>
+                <div class="hover" onclick="typing.answer(this)">m</div>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- <aside>
+        <div>
+            <h1>세로모드만 지원합니다.</h1>
+            <button onclick="typing.init('mode');">reload</button>
+        </div>
+    </aside> -->
+
+    <script>
+        const qs = function(t){return document.querySelector(t);}
+        const qsa = function(t){return document.querySelectorAll(t);}
+
+        function getRandomNum(mn, mx){return Math.floor(Math.random() * (mx - mn + 1)) + mn;};
+
+        function createBoard(){
+            const blockCnt = qs('#sizes input:checked').value;
+            const window_w = window.innerWidth;
+            const window_h = window.innerHeight;
+
+            const capaSpace = window_h - qs('footer').clientHeight;
+
+            let size1 = '';
+
+            if(window_w - capaSpace >= 0) size1 = capaSpace;
+            else size1 = window_w;
+
+            size1 = (parseInt(size1 / 10) * 10) - 20;
+
+            qs('#boardWrapper').style.width = size1 + 'px';
+            qs('#boardWrapper').style.height = size1 + 'px';
+
+            qs('#board').innerHTML = '';
+
+            for(let i = 0; i < (blockCnt * blockCnt); i++){
+                const div = document.createElement('div');
+                const div2 = document.createElement('div');
+                div.style.cssText = 'width: ' + (100 / blockCnt) + '%; height: ' + (100 / blockCnt) + '%;';
+                div2.innerText = '?';
+                div2.style.fontSize = (size1 / blockCnt * 0.4) + 'px';
+
+                qs('#board').appendChild(div);
+                div.appendChild(div2);
+            }
+
+            qs('#board').setAttribute('data-len', blockCnt);
+            qs('#boardWrapper').style.top = ((capaSpace - size1) / 2) + 'px';
+        }
+
+
+
+        function setRdmNum(){
+            for(let i = 0; i < (typing.blockCnt); i++){
+                const rdmNum = typing.words[typing.subject][getRandomNum(0, typing.words[typing.subject].length - 1)];
+                qsa('#board > div')[i].querySelector('div').innerText = rdmNum;
+                typing.rdmArr.push(rdmNum);
+            }
+        }
+
+        function startGameUI(){
+            qs('#board').querySelectorAll('div')[0].classList.add('on');
+            qsa('#sizes input').forEach(function(input){
+                input.setAttribute('disabled', true);
+            })
+        }
+
+
+        const typing = new Typing();
+
+        window.onload = function(){
+            const locSearch = location.search;
+            typing.subject = locSearch.split('=')[1];
+
+            qs('[data-subject="' + typing.subject + '"]').classList.add('on');
+
+            createBoard();
+
+
+            this.addEventListener('resize', function(){
+                createBoard();
+            })
+        };
+
+        function Typing(){
+            const t = this;
+
+            t.start = false;
+            t.end = false;
+            t.curIdx = 0;
+            t.blockCnt = 0;
+            t.rdmArr = [];
+            t.subject = '';
+
+            t.words = {
+                math: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                korean: ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅔ'],
+                english: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+            }
+
+            t.startGame = function(){
+                if(t.start && t.end === false) return;
+                t.blockCnt = qs('#sizes input:checked').value * qs('#sizes input:checked').value;
+                t.start = new Date().getTime();
+                setRdmNum();
+                startGameUI();
+                t.timer();
+            }
+
+            t.timer = function(){
+                const nowTime = new Date().getTime();
+                if(t.end === false){
+                    qs('#timer > span').innerText = ((nowTime - t.start) / 1000) + '초';
+                    requestAnimationFrame(t.timer);
+                }
+            }
+
+            t.answer = function(e){
+                if(t.start === false)  return;
+                const onValue = t.rdmArr[t.curIdx];
+                if(e.innerText == onValue){
+                    qs('#board').querySelector('div.on').classList.add('done');
+                    qs('#board').querySelector('div.on').classList.remove('on');
+
+                    if(t.curIdx++ < (t.blockCnt - 1)){
+                        qs('#board').querySelectorAll(':scope > div')[t.curIdx].classList.add('on');
+                    }else{
+                        t.end = new Date().getTime();
+                        qs('#timer > span').innerText = ((t.end - t.start) / 1000) + '초';
+                        setTimeout(function(){
+                            alert(((t.end - t.start) / 1000) + '초');
+                        }, 500);
+                    }
+                }else{
+                    qs('[data-subject]').classList.add('wrong');
+                    qs('[data-subject]').addEventListener('animationend', function(){
+                        qs('[data-subject]').classList.remove('wrong');
+                    })
+                }
+            }
+
+            t.init = function(type){
+                if(type == 'mode'){
+                    location.reload();
+                    return;
+                }
+                if(t.start === false) return;
+                if(confirm('초기화하시겠습니까?')) location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
